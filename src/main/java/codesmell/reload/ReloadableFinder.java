@@ -135,7 +135,7 @@ public class ReloadableFinder {
         
         if (Objects.nonNull(method)) {
             Class<?>[] paramTypes = method.getParameterTypes();
-            if (Objects.nonNull(paramTypes) && paramTypes.length > 0) {
+            if (Objects.nonNull(paramTypes) && paramTypes.length == 1) {
                 hasReloadMethodWithParam = this.checkParam(paramTypes[0]);
             }
         }
