@@ -20,6 +20,29 @@ public class ReloadableFinder {
 
     @Autowired
     private ApplicationContext springContext;
+    
+    /**
+     * find and return all instances that are annotated as {@link ReloadableClass} 
+     * and also have a method annotated as {@link ReloadableMethod}
+     */
+    public List<Object> findReloadableClassesWithMethodParam() {
+        Map<String, Object> map = springContext.getBeansWithAnnotation(ReloadableClass.class);
+        
+        List<Object> values = 
+            map.entrySet()
+                .stream()
+                // could check for an interface
+                // so we can call a method to reload properties
+                // .filter(e -> e.getValue() instanceof Reloadable)
+                .map(Map.Entry::getValue)
+                // could check for an annotated method to
+                // call as well
+                .filter(v -> this.hasReloadableMethodWithParameter(v.getClass()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toList());
+
+        return values;
+    }
 
     /**
      * find and return all instances that are annotated as {@link ReloadableClass} 
@@ -105,6 +128,20 @@ public class ReloadableFinder {
         return null;
     }
     
+    protected boolean hasReloadableMethodWithParameter(Class<?> clazz) {
+        boolean hasReloadMethodWithParam = false;
+        
+        Method method = this.getReloadableMethod(clazz);
+        
+        if (Objects.nonNull(method)) {
+            Class<?>[] paramTypes = method.getParameterTypes();
+            if (Objects.nonNull(paramTypes) && paramTypes.length > 0) {
+                hasReloadMethodWithParam = this.checkParam(paramTypes[0]);
+            }
+        }
+            
+        return hasReloadMethodWithParam;
+    }
     
     protected boolean hasReloadableMethod(Class<?> clazz) {
         return Objects.nonNull(this.getReloadableMethod(clazz));
@@ -118,5 +155,19 @@ public class ReloadableFinder {
         }
         return null;
     }
-
+    
+    private boolean checkParam(Class<?> paramClazz) {
+        boolean isCorrectParamType = false;
+        
+        try {
+            paramClazz.asSubclass(ReloadData.class);
+            isCorrectParamType = true;
+        } 
+        catch (ClassCastException e) {
+            isCorrectParamType = false;
+        }
+        
+        return isCorrectParamType;
+    }
+    
 }

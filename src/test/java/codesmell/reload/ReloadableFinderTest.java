@@ -4,6 +4,7 @@ import codesmell.config.FooConfig;
 import codesmell.foo.Foo;
 import codesmell.foo.FooMarkerMethod;
 import codesmell.foo.Grok;
+import codesmell.reload.annotation.ReloadableMethod;
 import codesmell.reload.interfacemarker.ReloadableMarker;
 import codesmell.reload.type.Reloadable;
 import org.junit.jupiter.api.AfterEach;
@@ -54,15 +55,42 @@ class ReloadableFinderTest {
         assertEquals("Foo", instanceOne.getClass().getSimpleName());
         
         // call the method
+        // cheating we know this has param
         Method fooReloadMethod = ReloadableFinder.findReloadableMethod(instanceOne);
         assertNotNull(fooReloadMethod);
         assertEquals("doSomething", fooReloadMethod.getName());
-        fooReloadMethod.invoke(instanceOne, null);
-        Mockito.verify(spyFoo, Mockito.times(1)).doSomething();
-
+        fooReloadMethod.invoke(instanceOne, new ReloadData());
+        Mockito.verify(spyFoo, Mockito.times(1)).doSomething(Mockito.any());
+        
         Object instanceTwo = annotatedInstances.get(1);
         assertNotNull(instanceTwo);
         assertEquals("BarWithMethod", instanceTwo.getClass().getSimpleName());
+        
+        // call the method
+        // cheating we know this has no param and is static
+        Method barReloadMethod = ReloadableFinder.findReloadableMethod(instanceTwo);
+        assertNotNull(barReloadMethod);
+        assertEquals("reload", barReloadMethod.getName());
+        barReloadMethod.invoke(null);
+
+    }
+    
+    @Test
+    void test_findReloadableClassesWithMethodParam() throws Exception {
+        List<Object> annotatedInstances = finder.findReloadableClassesWithMethodParam();
+        assertNotNull(annotatedInstances);
+        assertEquals(1, annotatedInstances.size());
+
+        Object instanceOne = annotatedInstances.get(0);
+        assertNotNull(instanceOne);
+        assertEquals("Foo", instanceOne.getClass().getSimpleName());
+        
+        // call the method
+        Method fooReloadMethod = ReloadableFinder.findReloadableMethod(instanceOne);
+        assertNotNull(fooReloadMethod);
+        assertEquals("doSomething", fooReloadMethod.getName());
+        fooReloadMethod.invoke(instanceOne, new ReloadData());
+        Mockito.verify(spyFoo, Mockito.times(1)).doSomething(Mockito.any());
     }
 
     @Test
@@ -76,6 +104,7 @@ class ReloadableFinderTest {
         Method methodTwo = annotatedMethods.get(1);
         assertNotNull(methodTwo);
         assertEquals("reload", methodTwo.getName());
+        methodTwo.isAnnotationPresent(ReloadableMethod.class);
         methodTwo.invoke(null);
     }
 

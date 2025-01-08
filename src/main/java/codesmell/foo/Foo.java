@@ -1,5 +1,6 @@
 package codesmell.foo;
 
+import codesmell.reload.ReloadData;
 import codesmell.reload.annotation.ReloadableClass;
 import codesmell.reload.annotation.ReloadableMethod;
 
@@ -7,7 +8,10 @@ import codesmell.reload.annotation.ReloadableMethod;
 public class Foo {
 
     @ReloadableMethod
-    public void doSomething() {
+    public void doSomething(ReloadData data) {
+    }
+    
+    public void doSomethingElse() {
     }
     
 }
